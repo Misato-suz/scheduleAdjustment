@@ -12,7 +12,7 @@ function setAsync(func_name, params, delay)
     "params": JSON.stringify(params)
     });
 
-  log("setAsync called; cache = " + cache.getAll() + "; func = " + func_name + "; params = " + params);
+  log("setAsync called; cache[func] = " + cache.get('func') + " ; cache[params] = " + cache.get('params') + "; \n func = " + func_name + "; params = " + JSON.stringify(params));
   
   //トリガーを設定
   ScriptApp.newTrigger('popAsync').timeBased().after(delay).create();
