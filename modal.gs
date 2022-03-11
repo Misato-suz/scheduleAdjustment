@@ -1,0 +1,160 @@
+
+// Modal can be created on (https://api.slack.com/tools/block-kit-builder).
+function getView() {
+  const today = Utilities.formatDate(new Date(), "JST", "yyyy-MM-dd");
+  return {
+      "type": "modal",
+      "title": {
+          "type": "plain_text",
+          "text": "日程調整",
+          "emoji": true
+      },
+      "submit": {
+          "type": "plain_text",
+          "text": "調整する",
+          "emoji": true
+      },
+      "close": {
+          "type": "plain_text",
+          "text": "キャンセル",
+          "emoji": true
+      },
+      "blocks": [
+          {
+              "block_id": "block_title",
+              "type": "input",
+              "element": {
+                  "action_id": "title",
+                  "type": "plain_text_input",
+                  "placeholder": {
+                      "type": "plain_text",
+                      "text": "(例): 総務部会",
+                      "emoji": true
+                  }
+              },
+              "label": {
+                  "type": "plain_text",
+                  "text": "イベント名 :man_dancing:",
+                  "emoji": true
+              }
+          },
+          {
+              "block_id": "block_date_1",
+              "type": "input",
+              "element": {
+                  "action_id": "date_1",
+                  "type": "datepicker",
+                  "initial_date": today,
+                  "placeholder": {
+                      "type": "plain_text",
+                      "text": "Select a date",
+                      "emoji": true
+                  }
+              },
+              "label": {
+                  "type": "plain_text",
+                  "text": "開始日",
+                  "emoji": true
+              }
+          },
+          {
+              "block_id": "block_date_2",
+              "type": "input",
+              "element": {
+                  "action_id": "date_2",
+                  "type": "datepicker",
+                  "initial_date": today,
+                  "placeholder": {
+                      "type": "plain_text",
+                      "text": "Select a date",
+                      "emoji": true
+                  }
+              },
+              "label": {
+                  "type": "plain_text",
+                  "text": "最終日",
+                  "emoji": true
+              }
+          },
+          {
+              "block_id": "block_time_1",
+              "type": "input",
+              "optional": true,
+              "element": {
+                  "action_id": "time_1",
+                  "type": "plain_text_input",
+                  "placeholder": {
+                      "type": "plain_text",
+                      "text": "空白にすると日付だけの調整になります",
+                      "emoji": true
+                  }
+              },
+              "label": {
+                  "type": "plain_text",
+                  "text": "時刻1",
+                  "emoji": true
+              }
+          },
+          {
+              "block_id": "block_time_2",
+              "type": "input",
+              "optional": true,
+              "element": {
+                  "action_id": "time_2",
+                  "type": "plain_text_input",
+                  "placeholder": {
+                      "type": "plain_text",
+                      "text": "(例) 12:00 ~",
+                      "emoji": true
+                  }
+              },
+              "label": {
+                  "type": "plain_text",
+                  "text": "時刻2",
+                  "emoji": true
+              }
+          },
+          {
+              "block_id": "block_time_3",
+              "type": "input",
+              "optional": true,
+              "element": {
+                  "action_id": "time_3",
+                  "type": "plain_text_input",
+                  "placeholder": {
+                      "type": "plain_text",
+                      "text": "(例) 午後",
+                      "emoji": true
+                  }
+              },
+              "label": {
+                  "type": "plain_text",
+                  "text": "時刻3",
+                  "emoji": true
+              }
+          },
+          {
+              "block_id": "block_append",
+              "type": "section",
+              "text": {
+                  "type": "mrkdwn",
+                  "text": "項目を追加できます。"
+              },
+              "accessory": {
+                  "type": "button",
+                  "text": {
+                      "type": "plain_text",
+                      "text": "add",
+                      "emoji": true
+                  },
+                  "value": "hoge"
+              }
+		}
+      ]
+  };
+}
+
+function addField(view)
+{
+  return view;
+}
