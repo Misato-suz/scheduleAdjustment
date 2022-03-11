@@ -17,7 +17,7 @@ function test()
     start_date: "2020-01-01",
     end_date: "2020-01-02",
     times: ["hoge", "", "fuga", ""],
-    thread_ts:"1644407170.775519",
+    thread_ts:"1646989967.937419",//3/11
     channel: "C59FMTTV4"
   });
 }

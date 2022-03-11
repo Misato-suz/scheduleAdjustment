@@ -82,9 +82,11 @@ function addReactions(channel, ts)
 // GAS limitation: https://developers.google.com/apps-script/guides/services/quotas
 var postScheduleRecursive = function(params)
 {
-  log(JSON.stringify(params, indent=4));
+
   const start = (new Date()).valueOf();
   const margin = 10000; // milliseconds?
+
+  log(JSON.stringify(params, indent=4) + "\nStart date: " + start);
   
   while((new Date()).valueOf() - start < margin) { // マージンギリギリまで
     var date = params.dates.shift();
@@ -126,7 +128,7 @@ var sendScheduleAdjustment = function (params)
   //駒小ドライブにログを保存
   //admin>syslog>schedule_adjustment
   log("@sendScheduleAdjustment; setAsync postScheduleRecursive" + JSON.stringify(params, indent=4));
-  setAsync('postScheduleRecursive', params, 500);
-
+  //setAsync('postScheduleRecursive', params, 500);
+  postScheduleRecursive(params);
 }
 
