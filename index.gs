@@ -98,7 +98,7 @@ function doPost(e)
         //ユーザーが入力した時刻1，2，3,　... を取得する。
         for(var n=1; values["block_time_" + n] != null; ++n) {
           if(values["block_time_" + n]["time_" + n].value != "") {
-            var num = values["block_time_" + n]["time_" + n].value();
+            var num = values["block_time_" + n]["time_" + n].value;
             if(num != null){
               times.push(num);}
           }
