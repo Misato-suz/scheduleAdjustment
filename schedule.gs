@@ -16,6 +16,9 @@ function joinChannel(channel) {
 
 
 function sendToSlack(channel, body, thread_ts) {
+
+  console.log("func sendToSlack called")
+
   const token = PropertiesService.getScriptProperties().getProperty('SLACK_API_TOKEN');
   const post_api_url = "https://slack.com/api/chat.postMessage";
  
@@ -45,7 +48,7 @@ function sendToSlack(channel, body, thread_ts) {
   var api_response = UrlFetchApp.fetch(post_api_url, options);
   var timestamp = JSON.parse(api_response.getContentText())['ts'];
   
-  console.log(api_response.getContentText());
+  console.log("func sendToSlack; return timestamp: " + timestamp);
   
   return timestamp;
 }
@@ -79,9 +82,11 @@ function addReactions(channel, ts)
 // GAS limitation: https://developers.google.com/apps-script/guides/services/quotas
 var postScheduleRecursive = function(params)
 {
-  log(JSON.stringify(params, indent=4));
+
   const start = (new Date()).valueOf();
-  const margin = 10000; // milliseconds
+  const margin = 10000; // milliseconds?
+
+  log(JSON.stringify(params, indent=4) + "\nStart date: " + start);
   
   while((new Date()).valueOf() - start < margin) { // マージンギリギリまで
     var date = params.dates.shift();
@@ -103,6 +108,7 @@ var postScheduleRecursive = function(params)
 // params: { title: String, start_date: String, end_date: String, times: String[], channel: Id }
 var sendScheduleAdjustment = function (params)
 {
+  console.log("sendScheduleAdjustment called");
   var date_1 = new Date(params.start_date);
   var date_2 = new Date(params.end_date);
   date_1.setHours(0, 0, 0);
@@ -121,8 +127,8 @@ var sendScheduleAdjustment = function (params)
 
   //駒小ドライブにログを保存
   //admin>syslog>schedule_adjustment
-  log("setAsync postScheduleRecursive" + JSON.stringify(params, indent=4));
-  setAsync('postScheduleRecursive', params);
-
+  log("@sendScheduleAdjustment; setAsync postScheduleRecursive" + JSON.stringify(params, indent=4));
+  //setAsync('postScheduleRecursive', params, 500);
+  postScheduleRecursive(params);
 }
 

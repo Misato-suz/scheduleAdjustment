@@ -90,6 +90,8 @@ function doPost(e)
         参考：https://api.slack.com/reference/interaction-payloads/views#view_closed
         */
 
+        console.log("1: submission button pushed; doPost called");
+
         var values = payload.view.state.values;
 
         var times = [];         //ユーザーが入力した時刻を配列に入れたもの
@@ -110,6 +112,8 @@ function doPost(e)
         if(times != undefined) {
           candidate += times.join('\n');
         }
+
+        console.log("2: parameters input complete, call func sendToSlack")
         
         //sendToSlackの戻り値はthread_ts
         //ここでは親スレッド（つまり今送ったやつ）のタイムスタンプが返ってくる（はず）
@@ -134,6 +138,8 @@ function doPost(e)
               }
             ])
           });
+
+        console.log("3: returned to doPost; received timestamp is: " + ts)
               
         var params = {
           channel: CacheService.getScriptCache().get("channel"),
@@ -142,8 +148,13 @@ function doPost(e)
           end_date: end_date,
           times: times,
         };
-        console.log(params);
+
+        console.log("4: parameters are: " + JSON.stringify(params) + "\nCalling setAsync");
+
         setAsync('sendScheduleAdjustment', params, 2000);
+
+        console.log("5: setAsync had been called and returned to doPost");
+
         return ContentService.createTextOutput();
         
       case "block_actions":
