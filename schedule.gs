@@ -93,11 +93,17 @@ var postScheduleRecursive = function(params)
     if(date == undefined) {
       return;
     }
-    params.times.every( function(time) {
-        var ts = sendToSlack(params.channel, date + ' ' + time, params.thread_ts);
-        addReactions(params.channel, ts);
-        return true;
-      });
+    if(params.times.length()>0){
+      params.times.every( function(time) {
+          var ts = sendToSlack(params.channel, date + ' ' + time, params.thread_ts);
+          addReactions(params.channel, ts);
+          return true;
+        });
+    }else{
+      var ts = sendToSlack(params.channel, date, params.thread_ts);
+      addReactions(params.channel, ts);
+      return true;
+    }
   }
   
   if(params.date.length > 0) {
