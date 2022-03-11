@@ -1,5 +1,7 @@
-function setAsync(func_name, params, delay)
-{
+function setAsync(func_name, params, delay){
+
+  console.log("setAsync called; go to google Drive for further log");
+
   if(delay == undefined) {
     delay = 300; // ms
   }
@@ -16,6 +18,8 @@ function setAsync(func_name, params, delay)
   
   //トリガーを設定
   ScriptApp.newTrigger('popAsync').timeBased().after(delay).create();
+  
+  console.log("new trigger popAsysnc was created");
 }
 
 function popAsync() 
@@ -23,7 +27,8 @@ function popAsync()
   const cache = CacheService.getScriptCache();
   const params = cache.get("params");
   const func = cache.get("func");
-  
+
+  console.log("popAsync() called; params=" + params + ", func=" + func);
   log("popAsync() called; params=" + params + ", func=" + func);
   
   if( func != null ) {
