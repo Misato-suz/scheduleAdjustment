@@ -77,22 +77,22 @@ function addReactions(channel, ts)
   });
 }
 
-// params: {channel: String, times: String[], date: String[], thread_ts: int }
+// params: {channel: String, times: String[], dates: String[], thread_ts: int }
 // 実行時間問題(Slackのchat.postMessageは1秒に1回、GASのタイムアウト上限は6分)のため、再帰で非同期実行する
 // GAS limitation: https://developers.google.com/apps-script/guides/services/quotas
-var postScheduleRecursive = function(params)
-{
+var postScheduleRecursive = function(params){
 
+  var date = ""; //日付の格納用
   const start = (new Date()).valueOf();
   const margin = 10000; // milliseconds?
 
   log(JSON.stringify(params, indent=4) + "\nStart date: " + start);
   
   while((new Date()).valueOf() - start < margin) { // マージンギリギリまで
-    var date = params.dates.shift();//最初の日付を取得
     if(date == undefined) {
       return;
     }
+    date = params.dates.shift();//配列の最初の日付を取りだす（要素が1減る）
     if(params.times.length>0){
       params.times.every( function(time) {
           var ts = sendToSlack(params.channel, date + ' ' + time, params.thread_ts);

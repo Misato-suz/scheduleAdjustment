@@ -65,40 +65,6 @@ function updateModal()
   return res.getContentText();
 }
 
-function newThread(params){
-
-  //sendToSlackの戻り値はthread_ts
-  //ここでは親スレッド（つまり今送ったやつ）のタイムスタンプが返ってくる（はず）
-  //第二引数の中身、titleは「総務部会」「人事会議」などのタイトル（ユーザー入力）
-  // todo: ts: (newDate()).valueof()は必要か？
-  const ts = sendToSlack(CacheService.getScriptCache().get("channel"),
-    {
-      "text": "スレッドで日程調整に答えて下さい。",
-      "attachments": JSON.stringify([
-        {
-          "fallback": "日程調整",
-          "color": "#e6378e",
-          "fields": [
-            {
-              "title": params.title,
-              "value": params.candidate
-            }
-          ],
-          "footer": "Komasho App",
-          "footer_icon": "https://i.imgur.com/57ZXIcT.png",
-          "ts": (new Date()).valueOf()  
-        }
-      ])
-    });
-  var params = {          
-    channel: CacheService.getScriptCache().get("channel"),
-    thread_ts: ts,
-    start_date: start_date,
-    end_date: end_date,
-    times: times,
-  }
-  setAsync('sendScheduleAdjustment', params, 2000);
-}
 function doPost(e)
 {
   if (e.parameter.command === "/adjust") {
@@ -148,39 +114,51 @@ function doPost(e)
           candidate += times.join('\n');
         }
 
-        var title = values.block_title.title.value;
-
-        console.log("2: parameters input complete, call func sendToSlack")
-        
-
-
-        console.log("3: returned to doPost; received timestamp is: " + ts)
+                //sendToSlackの戻り値はthread_ts
+        //ここでは親スレッド（つまり今送ったやつ）のタイムスタンプが返ってくる（はず）
+        //第二引数の中身、titleは「総務部会」「人事会議」などのタイトル（ユーザー入力）
+        // todo: ts: (newDate()).valueof()は必要か？
+        const ts = sendToSlack(CacheService.getScriptCache().get("channel"),
+          {
+            "text": "スレッドで日程調整に答えて下さい。",
+            "attachments": JSON.stringify([
+              {
+                "fallback": "日程調整",
+                "color": "#e6378e",
+                "fields": [
+                  {
+                    "title": values.block_title.title.value,
+                    "value": candidate
+                  }
+                ],
+                "footer": "Komasho App",
+                "footer_icon": "https://i.imgur.com/57ZXIcT.png",
+                "ts": (new Date()).valueOf()  
+              }
+            ])
+          });
               
         var params = {
           channel: CacheService.getScriptCache().get("channel"),
-          candidate: candidate,
-          title: title,
+          thread_ts: ts,
           start_date: start_date,
           end_date: end_date,
           times: times,
         };
 
-        console.log("4: parameters are: " + JSON.stringify(params) + "\nCalling setAsync");
-        console.log("5: setAsync had been called and returned to doPost");
+        setAsync('sendScheduleAdjustment', params, 2000);   
 
-        setAsync(newThread, params, 100);
-
-        return ContentService.createTextOutput();
+        return ContentService.createTextOutput("");
         
       case "block_actions":
         //add ボタンをおしたときの動作
         //Todo
         //setAsync('updateModal');
-        return ContentService.createTextOutput();
+        return ContentService.createTextOutput("");
         
       default:
         log("test: \n" + JSON.stringify(e, indent=4));
-        return ContentService.createTextOutput();
+        return ContentService.createTextOutput("");
     }
   }
   
