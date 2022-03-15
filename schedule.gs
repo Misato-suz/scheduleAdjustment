@@ -84,7 +84,7 @@ var postScheduleRecursive = function(params){
 
   var date = ""; //日付の格納用
   const start = (new Date()).valueOf();
-  const margin = 10000; // milliseconds?
+  const margin = 180000; // milliseconds?
 
   log(JSON.stringify(params, indent=4) + "\nStart date: " + start);
   
@@ -105,9 +105,11 @@ var postScheduleRecursive = function(params){
     }
   }
   
-  if(params.date.length > 0) {
+  if(params.dates.length > 0) {
     setAsync('postScheduleRecursive', params, 500);
+    return;
   }
+  return;
 }
 
 // params: { title: String, start_date: String, end_date: String, times: String[], channel: Id }
@@ -133,7 +135,6 @@ var sendScheduleAdjustment = function (params)
   //駒小ドライブにログを保存
   //admin>syslog>schedule_adjustment
   log("@sendScheduleAdjustment; setAsync postScheduleRecursive" + JSON.stringify(params, indent=4));
-  //setAsync('postScheduleRecursive', params, 500);
   postScheduleRecursive(params);
 }
 

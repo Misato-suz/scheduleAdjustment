@@ -153,7 +153,7 @@ function doPost(e)
       case "block_actions":
         //add ボタンをおしたときの動作
         //Todo
-        //setAsync('updateModal');
+        setAsync('updateModal');
         return ContentService.createTextOutput("");
         
       default:

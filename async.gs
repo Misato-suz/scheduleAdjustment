@@ -14,7 +14,7 @@ function setAsync(func_name, params, delay){
     "params": JSON.stringify(params)
     });
 
-  log("setAsync called; cache[func] = " + cache.get('func') + " ; cache[params] = " + cache.get('params') + "; \n func = " + func_name + "; params = " + JSON.stringify(params));
+  log("setAsync() called; cache[func] = " + cache.get('func') + " ; cache[params] = " + cache.get('params') + "; \n func = " + func_name + "; params = " + JSON.stringify(params));
   
   //トリガーを設定
   ScriptApp.newTrigger('popAsync').timeBased().after(delay).create();
@@ -22,8 +22,7 @@ function setAsync(func_name, params, delay){
   console.log("new trigger popAsysnc was created");
 }
 
-function popAsync() 
-{
+function popAsync() {
   const cache = CacheService.getScriptCache();
   const params = cache.get("params");
   const func = cache.get("func");
@@ -36,7 +35,7 @@ function popAsync()
     this[func](JSON.parse(params));
   }
   
-  cache.removeAll(["func", "params"]);
+  //cache.removeAll(["func", "params"]);　これやるとうまく動かないよ
 }
 
 function showCache()
