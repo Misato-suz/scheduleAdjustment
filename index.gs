@@ -90,6 +90,7 @@ function doPost(e)
         */
 
         console.log("1: submission button pushed; doPost called");
+        var cache = CacheService.getScriptCache();
 
         var values = payload.view.state.values;
 
@@ -137,23 +138,23 @@ function doPost(e)
               }
             ])
           });
-              
+        cache.put('parentTS', ts);
         var params = {
-          channel: CacheService.getScriptCache().get("channel"),
+          channel: cache.get("channel"),
           thread_ts: ts,
           start_date: start_date,
           end_date: end_date,
           times: times,
         };
 
-        setAsync('sendScheduleAdjustment', params, 2000);   
+        setAsync('sendScheduleAdjustment', params, 100);   
 
         return ContentService.createTextOutput("");
         
       case "block_actions":
         //add ボタンをおしたときの動作
         //Todo
-        setAsync('updateModal');
+        setAsync('updateModal',"");
         return ContentService.createTextOutput("");
         
       default:
@@ -163,4 +164,8 @@ function doPost(e)
   }
   
   return ContentService.createTextOutput("wtf");
+}
+
+function doGet(){
+  return ContentService.createTextOutput("");
 }

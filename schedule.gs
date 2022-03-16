@@ -53,28 +53,66 @@ function sendToSlack(channel, body, thread_ts) {
   return timestamp;
 }
 
-
-function addReactions(channel, ts)
-{
+/*
+@params {channel: params.channel, timeStamps_key: TIMESTAMPS_KEY}
+*/
+function addReactions(params){
+  //adding reactions: tier 3, 50 per min is allowed
   const token = PropertiesService.getScriptProperties().getProperty('SLACK_API_TOKEN');
   const reaction_api_url = "https://slack.com/api/reactions.add";
 
+  //retreive cache
+  const TIMESTAMPS_KEY = params.timeStamps_key;
+  const cache = CacheService.getScriptCache();
+  var timeStamps = cache.get(TIMESTAMPS_KEY).split(",");//array スレッドの返信のすべてのタイムスタンプ
+
   // add reaction
   const reactions = ["o", "さんかく", "00"];
-  
-  reactions.every( function (reaction) {
-    var options = {
-      "method" : "POST",
-      "payload" : { 
-          token : token,
-          channel : channel,
-          name : reaction,
-          timestamp : ts
+
+  while(timeStamps.length>0){
+    var ts = timeStamps.shift(); //String
+    if(!reactions.every( function (reaction) {
+      //このcallback functionの処理の結果、trueが返ってくればreactions.everyは続行する。
+      //functionがfalseを返すと、everyも即時にfalseを返す。
+
+      var options = {
+        "method" : "POST",
+        "payload" : { 
+            token : token,
+            channel : params.channel,
+            name : reaction,
+            timestamp : ts
+          }
+      };
+      var api_response = JSON.parse(UrlFetchApp.fetch(reaction_api_url, options).getContentText());
+
+      //エラー処理
+      if(api_response['ok']){
+        return true;
+      }else{
+        var error = api_response['error'];
+        switch(error){
+          case "ratelimited":
+            var retryTime = api_response['Retry-After'];//seconds
+            setAsync('addReactions', JSON.stringify({channel: params.channel, timeStamps_key: TIMESTAMPS_KEY}), retryTime * 1000)
+            //timeStampをcacheに入れる
+            timeStamps.unshift(ts);
+            cache.put(TIMESTAMPS_KEY, timeStamps.join());
+            return false;
+          case "already_reacted":
+            return true;
+          default:
+            console.log('An error occured in func addReactions(): ' + error);
+            return false;
         }
-    };
-    UrlFetchApp.fetch(reaction_api_url, options);
-    return true;
-  });
+      }
+    })){
+      //もしreactions.everyのcallback関数（78~108行目)がエラーで途中終了した場合、addReactionsはfalseを返す。
+      return false;
+    }
+  }
+  cache.remove(TIMESTAMPS_KEY);
+  return true;
 }
 
 // params: {channel: String, times: String[], dates: String[], thread_ts: int }
@@ -82,9 +120,12 @@ function addReactions(channel, ts)
 // GAS limitation: https://developers.google.com/apps-script/guides/services/quotas
 var postScheduleRecursive = function(params){
 
-  var date = ""; //日付の格納用
+  var date = ""; //日付の格納用  
+  var timeStamps = [];//返答メッセージのtimestamp格納用
   const start = (new Date()).valueOf();
   const margin = 180000; // milliseconds?
+  const TIMESTAMPS_KEY = String(params.thread_ts);
+  var cache = CacheService.getScriptCache();
 
   log(JSON.stringify(params, indent=4) + "\nStart date: " + start);
   
@@ -95,20 +136,31 @@ var postScheduleRecursive = function(params){
     date = params.dates.shift();//配列の最初の日付を取りだす（要素が1減る）
     if(params.times.length>0){
       params.times.every( function(time) {
-          var ts = sendToSlack(params.channel, date + ' ' + time, params.thread_ts);
-          addReactions(params.channel, ts);
+          timeStamps.push(sendToSlack(params.channel, date + ' ' + time, params.thread_ts));
           return true;
         });
     }else{
-      var ts = sendToSlack(params.channel, date, params.thread_ts);
-      addReactions(params.channel, ts);
+      timeStamps.push(sendToSlack(params.channel, date, params.thread_ts));
     }
   }
-  
-  if(params.dates.length > 0) {
+
+  //スレッド内の返答メッセージのtimestampをcacheに保存
+  var value = cache.get(TIMESTAMPS_KEY);
+  if(value == null){
+    cache.put(TIMESTAMPS_KEY, timeStamps.join());
+  }else{
+    cache.put(TIMESTAMPS_KEY, value + "," + timeStamps.join());
+  }
+  showCache();
+
+  //マージン内でメッセージ送信が終わらなかった場合、トリガーを用いて再度発火する。
+  if(params.date.length > 0) {
     setAsync('postScheduleRecursive', params, 500);
     return;
   }
+
+  addReactions({channel: params.channel, timeStamps_key: TIMESTAMPS_KEY});
+  showCache();
   return;
 }
 
