@@ -85,6 +85,7 @@ function addReactions(params){
           }
       };
       var api_response = JSON.parse(UrlFetchApp.fetch(reaction_api_url, options).getContentText());
+      Utilities.sleep(600);
 
       //エラー処理
       if(api_response['ok']){
@@ -123,7 +124,8 @@ var postScheduleRecursive = function(params){
   var date = ""; //日付の格納用  
   var timeStamps = [];//返答メッセージのtimestamp格納用
   const start = (new Date()).valueOf();
-  const margin = 180000; // milliseconds?
+  const margin = 180000; // milliseconds
+  const sleep = 1000; //milliseconds
   const TIMESTAMPS_KEY = String(params.thread_ts);
   var cache = CacheService.getScriptCache();
 
@@ -137,10 +139,12 @@ var postScheduleRecursive = function(params){
     if(params.times.length>0){
       params.times.every( function(time) {
           timeStamps.push(sendToSlack(params.channel, date + ' ' + time, params.thread_ts));
+          Utilities.sleep(sleep);
           return true;
         });
     }else{
       timeStamps.push(sendToSlack(params.channel, date, params.thread_ts));
+      Utilities.sleep(sleep);
     }
   }
 
