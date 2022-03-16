@@ -17,7 +17,7 @@ function joinChannel(channel) {
 
 function sendToSlack(channel, body, thread_ts) {
 
-  console.log("func sendToSlack called")
+  //console.log("func sendToSlack called")
 
   const token = PropertiesService.getScriptProperties().getProperty('SLACK_API_TOKEN');
   const post_api_url = "https://slack.com/api/chat.postMessage";
@@ -44,15 +44,17 @@ function sendToSlack(channel, body, thread_ts) {
     //put parent message timestamp, if it exists
     options.payload['thread_ts'] = thread_ts;
   }
-  
-  var api_response = UrlFetchApp.fetch(post_api_url, options);
-  if(errorCheck(JSON.parse(api_response.getContentText()), post_api_url, options)){
-    var timestamp = JSON.parse(api_response.getContentText())['ts'];
-    console.log("func sendToSlack; return timestamp: " + timestamp);
-    return timestamp;
-  }else{
-    return;
+
+  var api_response;
+  try{
+    api_response = UrlFetchApp.fetch(post_api_url, options);
+  }catch(e){
+    console.log("error: " + e);
+    errorCheck(api_response, post_api_url, options);
   }
+  var timestamp = JSON.parse(api_response.getContentText())['ts'];
+  return timestamp;
+
 }
 
 function errorCheck(api_response, url, options){
@@ -63,6 +65,7 @@ function errorCheck(api_response, url, options){
       case "ratelimited":
       case "rate_limited":
         var retryTime = api_response['Retry-After'];//seconds
+        console.log(api_response);
         Utilities.sleep(retryTime * 1000);
         var response = JSON.parse(UrlFetchApp.fetch(url, options).getContentText());
         return errorCheck(response, url, options);
@@ -96,9 +99,16 @@ function addReactions(channel, ts){
           timestamp : ts
         }
     };
-    var api_response = JSON.parse(UrlFetchApp.fetch(reaction_api_url, options).getContentText());
+    var api_response;
     //エラー処理
-    return errorCheck(api_response, reaction_api_url, options);
+    try{
+      api_response = JSON.parse(UrlFetchApp.fetch(reaction_api_url, options).getContentText());
+      Utilities.sleep(50);
+    }catch(e){
+      console.log("error: " + e);
+      return errorCheck(api_response, post_api_url, options);
+    }
+    return true;
   })){
     //もしreactions.everyのcallback関数（78~108行目)がエラーで途中終了した場合、addReactionsはfalseを返す。
     return false;
@@ -111,29 +121,34 @@ function addReactions(channel, ts){
 // GAS limitation: https://developers.google.com/apps-script/guides/services/quotas
 var postScheduleRecursive = function(params){
 
-  var date = ""; //日付の格納用  
+  var date = params.dates.shift(); //日付の格納用  配列の最初の要素を取り出す
   var timeStamp = "";
   const start = (new Date()).valueOf();
   var current = (new Date()).valueOf();
-  const margin = 180000; // milliseconds(3 min)
+  //const margin = 180000; // milliseconds(3 min)
+  const margin = 30000;
+  const sleep = 500; //milliseconds(0.5sec)
 
   log(JSON.stringify(params, indent=4) + "\nStart date: " + start);
   
   while(current - start < margin) { // マージンギリギリまで
-    date = params.dates.shift();//配列の最初の日付を取りだす（要素が1減る）
     if(params.times.length>0){
       params.times.every( function(time) {
-          timeStamp = (sendToSlack(params.channel, date + ' ' + time, params.thread_ts));
+          timeStamp = sendToSlack(params.channel, date + ' ' + time, params.thread_ts);
           addReactions(params.channel, timeStamp);
-          current = (new Date()).valueOf();
+          Utilities.sleep(sleep);
           return true;
         });
     }else{
-      timeStamp = (sendToSlack(params.channel, date, params.thread_ts));
+      timeStamp = sendToSlack(params.channel, date, params.thread_ts);
       addReactions(params.channel, timeStamp);
-      current = (new Date()).valueOf();
+      Utilities.sleep(sleep);
     }
-    if(params.dates == undefined){return;}
+
+    current = (new Date()).valueOf();
+    console.log("latest timestamp: " + timeStamp + "\nCurrent time: " + current + "\nCurrent - start: " + (current - start));
+    date = params.dates.shift();
+    if(date == undefined){return;}
   }
 
   //マージン内でメッセージ送信が終わらなかった場合、トリガーを用いて再度発火する。
@@ -141,6 +156,8 @@ var postScheduleRecursive = function(params){
     setAsync('postScheduleRecursive', params, 500);
     return;
   }
+  console.log("postScheduleRecursive; exit");
+  return;
 }
 
 // params: { title: String, start_date: String, end_date: String, times: String[], channel: Id }
