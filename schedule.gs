@@ -129,7 +129,7 @@ var postScheduleRecursive = function(params){
   const margin = 30000;
   const sleep = 500; //milliseconds(0.5sec)
 
-  log(JSON.stringify(params, indent=4) + "\nStart date: " + start);
+  //log(JSON.stringify(params, indent=4) + "\nStart date: " + start);
   
   while(current - start < margin) { // マージンギリギリまで
     if(params.times.length>0){
@@ -148,7 +148,10 @@ var postScheduleRecursive = function(params){
     current = (new Date()).valueOf();
     console.log("latest timestamp: " + timeStamp + "\nCurrent time: " + current + "\nCurrent - start: " + (current - start));
     date = params.dates.shift();
-    if(date == undefined){return;}
+    
+    if(date == undefined){  
+      console.log("postScheduleRecursive; exit");
+      return;}
   }
 
   //マージン内でメッセージ送信が終わらなかった場合、トリガーを用いて再度発火する。
@@ -160,10 +163,33 @@ var postScheduleRecursive = function(params){
   return;
 }
 
-// params: { title: String, start_date: String, end_date: String, times: String[], channel: Id }
+// params: {channel: id, candidate: messege body,title: title of schedule, start_date: start_date,end_date: end_date,times: times,}
 var sendScheduleAdjustment = function (params)
 {
   console.log("sendScheduleAdjustment called");
+  //sendToSlackの戻り値はthread_ts
+  //ここでは親スレッド（つまり今送ったやつ）のタイムスタンプが返ってくる（はず）
+  //第二引数の中身、titleは「総務部会」「人事会議」などのタイトル（ユーザー入力）
+  // todo: ts: (newDate()).valueof()は必要か？
+  const ts = sendToSlack(params.channel,
+    {
+      "text": "スレッドで日程調整に答えて下さい。",
+      "attachments": JSON.stringify([
+        {
+          "fallback": "日程調整",
+          "color": "#e6378e",
+          "fields": [
+            {
+              "title": params.title,
+              "value": params.candidate
+            }
+          ],
+          "footer": "Komasho App",
+          "footer_icon": "https://i.imgur.com/57ZXIcT.png",  
+        }
+      ])
+    });
+  
   var date_1 = new Date(params.start_date);
   var date_2 = new Date(params.end_date);
   date_1.setHours(0, 0, 0);
@@ -171,7 +197,7 @@ var sendScheduleAdjustment = function (params)
   var params = {
     channel: params.channel,
     times: params.times.filter(function (time) {return time != "";} ),
-    thread_ts: params.thread_ts,
+    thread_ts: ts,
     dates: []
   };
   
@@ -182,6 +208,6 @@ var sendScheduleAdjustment = function (params)
 
   //駒小ドライブにログを保存
   //admin>syslog>schedule_adjustment
-  log("@sendScheduleAdjustment; setAsync postScheduleRecursive" + JSON.stringify(params, indent=4));
+  //log("@sendScheduleAdjustment; setAsync postScheduleRecursive" + JSON.stringify(params, indent=4));
   postScheduleRecursive(params);
 }

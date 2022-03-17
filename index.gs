@@ -45,7 +45,7 @@ function updateModal()
   const payload = {
     token: api_token,
     trigger_id: trigger_id,
-    view: getView()
+    view: addTimeBlock()
   };
   
   const headers = {
@@ -74,7 +74,7 @@ function doPost(e)
     //trigger id expires in 3 sec. Can only be used once. Is neccessary to open modal.
     sendModal(e.parameter.trigger_id);
     joinChannel(e.parameter.channel_id);
-    return ContentService.createTextOutput("入力後、少しすると投稿されます");
+    return ContentService.createTextOutput("入力後、30秒から1分ほどで投稿されます");
     
   } else {
     
@@ -88,12 +88,7 @@ function doPost(e)
         オプションで付けることもできる
         参考：https://api.slack.com/reference/interaction-payloads/views#view_closed
         */
-
-        console.log("1: submission button pushed; doPost called");
-        var cache = CacheService.getScriptCache();
-
         var values = payload.view.state.values;
-
         var times = [];         //ユーザーが入力した時刻を配列に入れたもの
         //ユーザーが入力した時刻1，2，3,　... を取得する。
         for(var n=1; values["block_time_" + n] != null; ++n) {
@@ -115,33 +110,10 @@ function doPost(e)
           candidate += times.join('\n');
         }
 
-                //sendToSlackの戻り値はthread_ts
-        //ここでは親スレッド（つまり今送ったやつ）のタイムスタンプが返ってくる（はず）
-        //第二引数の中身、titleは「総務部会」「人事会議」などのタイトル（ユーザー入力）
-        // todo: ts: (newDate()).valueof()は必要か？
-        const ts = sendToSlack(CacheService.getScriptCache().get("channel"),
-          {
-            "text": "スレッドで日程調整に答えて下さい。",
-            "attachments": JSON.stringify([
-              {
-                "fallback": "日程調整",
-                "color": "#e6378e",
-                "fields": [
-                  {
-                    "title": values.block_title.title.value,
-                    "value": candidate
-                  }
-                ],
-                "footer": "Komasho App",
-                "footer_icon": "https://i.imgur.com/57ZXIcT.png",
-                "ts": (new Date()).valueOf()  
-              }
-            ])
-          });
-        cache.put('parentTS', ts);
         var params = {
-          channel: cache.get("channel"),
-          thread_ts: ts,
+          channel: CacheService.getScriptCache().get("channel"),
+          candidate: candidate,
+          title: values.block_title.title.value,
           start_date: start_date,
           end_date: end_date,
           times: times,

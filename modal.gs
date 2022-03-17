@@ -158,3 +158,73 @@ function addField(view)
 {
   return view;
 }
+
+function block(type, num){
+  switch (type){
+    case "block_append":
+      return  {
+              "block_id": "block_append",
+              "type": "section",
+              "text": {
+                  "type": "mrkdwn",
+                  "text": "項目を追加できます。"
+              },
+              "accessory": {
+                  "type": "button",
+                  "text": {
+                      "type": "plain_text",
+                      "text": "add",
+                      "emoji": true
+                  },
+                  "value": "hoge"
+              }
+		};
+    case "time":
+      return  {
+              "block_id": "block_time_" + num,
+              "type": "input",
+              "optional": true,
+              "element": {
+                  "action_id": "time_" + num,
+                  "type": "plain_text_input",
+                  "placeholder": {
+                      "type": "plain_text",
+                      "text": "(例) 午後",
+                      "emoji": true
+                  }
+              },
+              "label": {
+                  "type": "plain_text",
+                  "text": "時刻" + num,
+                  "emoji": true
+              }
+          }
+    default: 
+      return getView();
+  }
+}
+
+function addTimeBlock(num){
+  var view = getView();
+  console.log(view.blocks.length)
+
+  var number;
+  if(num == undefined){
+    number = view.blocks.length - 3;
+  }else{number = num}
+  console.log("number is " + number)
+
+  view.blocks.pop();
+  view.blocks.push(block("time",number))
+  view.blocks.push(block("block_append"));
+  console.log(view.blocks);
+
+  return view;
+}
+
+function viewTest(){
+  for(var i = 0; i < 5; i ++){
+    updateView();
+  }
+  return;
+}
